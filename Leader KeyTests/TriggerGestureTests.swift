@@ -219,16 +219,37 @@ final class TriggerGestureTests: XCTestCase {
 
   // MARK: - Key repeat
 
-  // A function key repeats while held. Only the first press may open a
-  // gesture, or the hold timer restarts forever and the peek never fires.
-  func testTriggerRepeatDoesNotRearm() {
+  // A function key repeats while held. Rearming on each repeat would restart
+  // the hold timer forever and the peek would never fire.
+  func testTriggerRepeatDoesNotRearmTheHoldTimer() {
     var g = gesture(hold: .peekLeaderKey, holdThreshold: 0.15)
     XCTAssertEqual(g.triggerDown(at: 0), [.startHoldTimer(after: 0.15)])
-    XCTAssertEqual(g.triggerDown(at: 0.05), [])
+    XCTAssertEqual(g.triggerDown(at: 0.05), [], "a repeat must not rearm")
     XCTAssertEqual(g.triggerDown(at: 0.1), [])
+  }
 
-    // The tap window is still measured from the original press.
+  // The tap window runs from the original press. Measured from the last
+  // repeat instead, this 200ms hold would look like 100ms and fire a tap.
+  // Hyper-only mode, so no timer is involved in the outcome.
+  func testTriggerRepeatDoesNotRestartTheTapWindow() {
+    var g = gesture(tap: .escape, hold: .hyperOnly, tapTimeout: 0.15)
+    g.triggerDown(at: 0)
+    g.triggerDown(at: 0.05)
+    g.triggerDown(at: 0.1)
     XCTAssertEqual(g.triggerUp(at: 0.2), [.cancelHoldTimer])
+  }
+
+  // The mode can change while a hold timer is already in flight, and a timer
+  // handler that has started cannot be called back. The gesture has to refuse
+  // the peek on its own rather than trust the caller.
+  func testModeSwitchedToHyperOnlyMidPressRefusesThePeek() {
+    var g = gesture(hold: .peekLeaderKey)
+    g.triggerDown(at: 0)
+
+    g.config.holdBehavior = .hyperOnly
+
+    XCTAssertEqual(g.holdThresholdReached(), [])
+    XCTAssertEqual(g.phase, .armed, "still just a held key, not a peek")
   }
 
   // MARK: - Reset

@@ -114,9 +114,17 @@ struct TriggerGesture {
 
   @discardableResult
   mutating func holdThresholdReached() -> [Effect] {
+    // Checked here rather than trusting the caller not to arm a timer in
+    // hyper-only mode. `update(config:)` can switch modes while a timer is
+    // already in flight: it cancels the timer, but a handler that has already
+    // started and is blocked on the caller's lock still runs afterwards, and
+    // would otherwise open the panel in a mode that has no panel.
+    guard config.holdBehavior == .peekLeaderKey else { return [] }
+
     // A key or a release may have landed between the timer firing and this
     // call, in which case the press is already claimed.
     guard phase == .armed else { return [] }
+
     phase = .peek
     return [.openPanel]
   }
