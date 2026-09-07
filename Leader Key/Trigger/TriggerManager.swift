@@ -73,6 +73,7 @@ final class TriggerManager: ObservableObject {
     // rather than patched while a press might be in flight. `initial: false`
     // keeps the replayed current value from restarting us on launch.
     let rebuildKeys: [Defaults.Keys] = [
+      Defaults.Keys.triggerSource,
       Defaults.Keys.capsLockTriggerKey,
       Defaults.Keys.capsLockTapBehavior,
       Defaults.Keys.capsLockHoldBehavior,
@@ -123,22 +124,23 @@ final class TriggerManager: ObservableObject {
       "hold=\(g.holdBehavior.rawValue, privacy: .public) at \(g.holdThreshold, privacy: .public)s")
     triggerLog.notice("closePeekOnRelease=\(g.closePeekOnRelease, privacy: .public)")
 
+    let source = Defaults[.triggerSource]
     let key = Defaults[.capsLockTriggerKey]
-    guard CapsLockRemap.shared.apply(target: key) else {
-      triggerLog.error("remap to \(key.rawValue, privacy: .public) refused")
+    guard TriggerRemap.shared.apply(source: source, target: key) else {
+      triggerLog.error("remap of \(source.rawValue, privacy: .public) refused")
       status = .remapFailed
       return
     }
-    let mapping = mappingDescription
     triggerLog.notice(
-      "running, caps lock is \(key.rawValue, privacy: .public), hid=\(mapping, privacy: .public)")
+      "running, \(source.rawValue, privacy: .public) reports as \(key.rawValue, privacy: .public)")
+    triggerLog.notice("hid=\(self.mappingDescription, privacy: .public)")
     status = .running
   }
 
   func stop() {
     triggerLog.notice("stop")
     tap.stop()
-    CapsLockRemap.shared.revert()
+    TriggerRemap.shared.revert()
     status = .off
   }
 
@@ -152,8 +154,8 @@ final class TriggerManager: ObservableObject {
   private func recover() {
     guard status == .running else { return }
     tap.reset()
-    if !CapsLockRemap.shared.isMappingLive() {
-      CapsLockRemap.shared.reapply()
+    if !TriggerRemap.shared.isMappingLive() {
+      TriggerRemap.shared.reapply()
     }
   }
 
@@ -185,7 +187,7 @@ final class TriggerManager: ObservableObject {
   /// pane. Other apps write to the same property, so this is not necessarily
   /// ours.
   var mappingDescription: String {
-    let pairs = CapsLockRemap.shared.currentMapping()
+    let pairs = TriggerRemap.shared.currentMapping()
     guard !pairs.isEmpty else { return "none" }
     return pairs.map { pair in
       let src = (pair["HIDKeyboardModifierMappingSrc"] as? NSNumber)?.uint64Value ?? 0

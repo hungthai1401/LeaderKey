@@ -2,27 +2,27 @@ import Cocoa
 import IOKit
 import OSLog
 
-/// Repoints the physical Caps Lock key at a function key.
+/// Repoints a physical key at a function key.
 ///
 /// This is the layer everything else depends on. macOS debounces the real
 /// Caps Lock inside the HID layer by roughly 80ms and never sends key repeats
 /// for it, which makes tap-versus-hold timing unusable. Once the key reports
 /// as a plain function key that behaviour is gone and every timing decision
-/// downstream runs on clean key events.
+/// downstream runs on clean key events. A remapped modifier gains the same
+/// property, and loses its modifier duty for as long as the mapping stands.
 ///
 /// The mapping is a HID system property, so it outlives this process and has
 /// to be handed back on quit. It does not survive a reboot.
-final class CapsLockRemap {
-  static let shared = CapsLockRemap()
+final class TriggerRemap {
+  static let shared = TriggerRemap()
 
   private static let mappingProperty = "UserKeyMapping"
   private static let sourceField = "HIDKeyboardModifierMappingSrc"
   private static let destinationField = "HIDKeyboardModifierMappingDst"
 
-  /// Caps Lock on the Keyboard/Keypad page.
-  private static let capsLockUsage: UInt64 = 0x7_0000_0039
-
-  /// The key Caps Lock currently points at, or nil when the system owns it.
+  /// The key currently handed over, or nil when the system owns everything.
+  private(set) var source: TriggerSource?
+  /// What that key points at, or nil when the system owns it.
   private(set) var target: TriggerKey?
 
   private var watcher: KeyboardArrivalWatcher?
@@ -30,14 +30,15 @@ final class CapsLockRemap {
   private init() {}
 
   @discardableResult
-  func apply(target: TriggerKey) -> Bool {
-    guard write(mapping(to: target)) else { return false }
+  func apply(source: TriggerSource, target: TriggerKey) -> Bool {
+    guard write(mapping(from: source, to: target)) else { return false }
+    self.source = source
     self.target = target
     startWatchingForKeyboards()
     return true
   }
 
-  /// Hands Caps Lock back to the system. Skipping this on quit leaves the key
+  /// Hands the key back to the system. Skipping this on quit leaves the key
   /// dead until the user reboots, so it runs from applicationWillTerminate.
   @discardableResult
   func revert() -> Bool {
@@ -49,6 +50,7 @@ final class CapsLockRemap {
     // launch with the trigger switched off.
     guard target != nil else { return true }
     guard write([]) else { return false }
+    source = nil
     target = nil
     return true
   }
@@ -57,18 +59,17 @@ final class CapsLockRemap {
   /// for a keyboard that was plugged in after the mapping was set.
   @discardableResult
   func reapply() -> Bool {
-    guard let target else { return false }
-    return write(mapping(to: target))
+    guard let source, let target else { return false }
+    return write(mapping(from: source, to: target))
   }
 
   /// True when the HID system is actually holding the mapping this object
   /// thinks it set. Worth checking before blaming the event tap.
   func isMappingLive() -> Bool {
-    guard let target else { return false }
-    let expected = target.hidUsage
+    guard let source, let target else { return false }
     return currentMapping().contains { pair in
-      (pair[Self.sourceField] as? NSNumber)?.uint64Value == Self.capsLockUsage
-        && (pair[Self.destinationField] as? NSNumber)?.uint64Value == expected
+      (pair[Self.sourceField] as? NSNumber)?.uint64Value == source.hidUsage
+        && (pair[Self.destinationField] as? NSNumber)?.uint64Value == target.hidUsage
     }
   }
 
@@ -81,10 +82,12 @@ final class CapsLockRemap {
     return (value as? [[String: Any]]) ?? []
   }
 
-  private func mapping(to target: TriggerKey) -> [[String: Any]] {
+  private func mapping(from source: TriggerSource, to target: TriggerKey)
+    -> [[String: Any]]
+  {
     [
       [
-        Self.sourceField: NSNumber(value: Self.capsLockUsage),
+        Self.sourceField: NSNumber(value: source.hidUsage),
         Self.destinationField: NSNumber(value: target.hidUsage),
       ]
     ]

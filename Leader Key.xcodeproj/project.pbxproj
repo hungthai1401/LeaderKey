@@ -57,7 +57,7 @@
 		6D9B9C062DBA000000000003 /* ConfigEditorShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */; };
 		C15EF48872A03F206C3D9F78 /* HIDEventSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF6DFA164CC7B56224EC910 /* HIDEventSystem.swift */; };
 		BDEBB01F692F05C763CAE028 /* TriggerKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3889B9479DC2D35A8409087 /* TriggerKey.swift */; };
-		5DAE10C8D42CB27EFC2E78B0 /* CapsLockRemap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2120021F42D8E8D1CADBF293 /* CapsLockRemap.swift */; };
+		5DAE10C8D42CB27EFC2E78B0 /* TriggerRemap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2120021F42D8E8D1CADBF293 /* TriggerRemap.swift */; };
 		243ECECA084C2A727DD4C911 /* CapsLockState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD891EB946751B51A41EB033 /* CapsLockState.swift */; };
 		E170E4345D0EC0110057CF1B /* HyperTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFB69D2256F9B0E085A3D167 /* HyperTap.swift */; };
 		A842C2C25330DBC2A4319B89 /* TriggerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D5F79FA79D563656D4CCED /* TriggerManager.swift */; };
@@ -125,7 +125,7 @@
 		6D9B9C052DBA000000000003 /* ConfigEditorShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigEditorShared.swift; sourceTree = "<group>"; };
 		8BF6DFA164CC7B56224EC910 /* HIDEventSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIDEventSystem.swift; sourceTree = "<group>"; };
 		D3889B9479DC2D35A8409087 /* TriggerKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerKey.swift; sourceTree = "<group>"; };
-		2120021F42D8E8D1CADBF293 /* CapsLockRemap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsLockRemap.swift; sourceTree = "<group>"; };
+		2120021F42D8E8D1CADBF293 /* TriggerRemap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRemap.swift; sourceTree = "<group>"; };
 		CD891EB946751B51A41EB033 /* CapsLockState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapsLockState.swift; sourceTree = "<group>"; };
 		DFB69D2256F9B0E085A3D167 /* HyperTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HyperTap.swift; sourceTree = "<group>"; };
 		D2D5F79FA79D563656D4CCED /* TriggerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerManager.swift; sourceTree = "<group>"; };
@@ -291,7 +291,7 @@
 			children = (
 				8BF6DFA164CC7B56224EC910 /* HIDEventSystem.swift */,
 				D3889B9479DC2D35A8409087 /* TriggerKey.swift */,
-				2120021F42D8E8D1CADBF293 /* CapsLockRemap.swift */,
+				2120021F42D8E8D1CADBF293 /* TriggerRemap.swift */,
 				CD891EB946751B51A41EB033 /* CapsLockState.swift */,
 				DFB69D2256F9B0E085A3D167 /* HyperTap.swift */,
 				FB0724293377928BA61BF563 /* TriggerGesture.swift */,
@@ -460,7 +460,7 @@
 				D46BB199B9F42D495C050A31 /* TriggerGesture.swift in Sources */,
 				C15EF48872A03F206C3D9F78 /* HIDEventSystem.swift in Sources */,
 				BDEBB01F692F05C763CAE028 /* TriggerKey.swift in Sources */,
-				5DAE10C8D42CB27EFC2E78B0 /* CapsLockRemap.swift in Sources */,
+				5DAE10C8D42CB27EFC2E78B0 /* TriggerRemap.swift in Sources */,
 				243ECECA084C2A727DD4C911 /* CapsLockState.swift in Sources */,
 				E170E4345D0EC0110057CF1B /* HyperTap.swift in Sources */,
 				A842C2C25330DBC2A4319B89 /* TriggerManager.swift in Sources */,

@@ -47,6 +47,11 @@ extension Defaults.Keys {
 
   static let capsLockTriggerEnabled = Key<Bool>(
     "capsLockTriggerEnabled", default: false, suite: defaultsSuite)
+  // Named for what it is rather than capsLockTriggerSource, to match its
+  // siblings. The older keys keep the names they were stored under, since
+  // renaming one means migrating everybody's settings for nothing visible.
+  static let triggerSource = Key<TriggerSource>(
+    "triggerSource", default: .capsLock, suite: defaultsSuite)
   static let capsLockTriggerKey = Key<TriggerKey>(
     "capsLockTriggerKey", default: .f18, suite: defaultsSuite)
   // A tap keeps doing what the key is printed to do, because a key that

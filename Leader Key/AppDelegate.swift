@@ -30,7 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         contentView: { GeneralPane().environmentObject(self.config) }
       ),
       Settings.Pane(
-        identifier: .trigger, title: "Caps Lock",
+        identifier: .trigger, title: "Trigger",
         toolbarIcon: NSImage(
           systemSymbolName: "capslock", accessibilityDescription: "Caps Lock")!,
         contentView: { TriggerPane() }

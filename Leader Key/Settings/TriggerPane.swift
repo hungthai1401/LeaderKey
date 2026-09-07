@@ -8,6 +8,7 @@ struct TriggerPane: View {
   @ObservedObject private var trigger = TriggerManager.shared
 
   @Default(.capsLockTriggerEnabled) var enabled
+  @Default(.triggerSource) var source
   @Default(.capsLockTriggerKey) var triggerKey
   @Default(.capsLockTapBehavior) var tapBehavior
   @Default(.capsLockHoldBehavior) var holdBehavior
@@ -19,11 +20,11 @@ struct TriggerPane: View {
     Settings.Container(contentWidth: contentWidth) {
       Settings.Section(title: "", bottomDivider: true, verticalAlignment: .top) {
         VStack(alignment: .leading, spacing: 8) {
-          Toggle("Take over Caps Lock", isOn: $enabled)
+          Toggle("Take over \(source.description)", isOn: $enabled)
           Text(
-            "Points Caps Lock at \(triggerKey.description) in the HID layer, "
-              + "then reads tap, chord and hold separately. Turning this off "
-              + "hands the key straight back."
+            "Points \(source.description) at \(triggerKey.description) in the "
+              + "HID layer, then reads tap, chord and hold separately. "
+              + "Turning this off hands the key straight back."
           )
           .font(.callout)
           .foregroundStyle(.secondary)
@@ -70,9 +71,12 @@ struct TriggerPane: View {
           .labelsHidden()
           .frame(width: 260)
 
-          Text("Holding Caps Lock together with another key is always Hyper.")
-            .font(.callout)
-            .foregroundStyle(.secondary)
+          Text(
+            "Holding \(source.description) together with another key is always "
+              + "Hyper."
+          )
+          .font(.callout)
+          .foregroundStyle(.secondary)
 
           if holdBehavior == .peekLeaderKey {
             Divider().padding(.vertical, 2)
@@ -91,18 +95,32 @@ struct TriggerPane: View {
         .disabled(!enabled)
       }
 
-      Settings.Section(title: "Trigger key", bottomDivider: false, verticalAlignment: .top) {
+      Settings.Section(title: "Keys", bottomDivider: false, verticalAlignment: .top) {
         VStack(alignment: .leading, spacing: 8) {
-          Picker("", selection: $triggerKey) {
-            ForEach(TriggerKey.allCases) { Text($0.description).tag($0) }
+          Picker("Hand over", selection: $source) {
+            ForEach(TriggerSource.allCases) { Text($0.description).tag($0) }
           }
-          .labelsHidden()
-          .frame(width: 120)
+          .frame(width: 300)
 
           Text(
-            "The key Caps Lock reports as. F18 is the default because no Mac "
-              + "keyboard ships one, so nothing else is listening. Change it "
-              + "only if another app already claims F18."
+            "Caps Lock is the safe answer, since nothing else wants it. A "
+              + "right-hand modifier stops working as a modifier for as long "
+              + "as this is on."
+          )
+          .font(.callout)
+          .foregroundStyle(.secondary)
+
+          Divider().padding(.vertical, 2)
+
+          Picker("Reports as", selection: $triggerKey) {
+            ForEach(TriggerKey.allCases) { Text($0.description).tag($0) }
+          }
+          .frame(width: 220)
+
+          Text(
+            "F18 is the default because no Mac keyboard ships one, so nothing "
+              + "else is listening. Change it only if another app already "
+              + "claims F18."
           )
           .font(.callout)
           .foregroundStyle(.secondary)

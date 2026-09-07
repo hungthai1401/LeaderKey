@@ -65,12 +65,14 @@ Leader Key is a macOS application that provides customizable keyboard shortcuts.
 Optional, off by default, and independent of the `KeyboardShortcuts` path.
 Three layers stacked on each other:
 
-- `CapsLockRemap` points the physical Caps Lock at a function key (F18 by
-  default) by writing `UserKeyMapping` on an IOHIDEventSystemClient. This must
-  happen first: macOS debounces the real Caps Lock in the HID layer by ~80ms
-  and sends no key repeats for it, which makes tap-versus-hold timing
-  unusable. The property is client-level, not per-service, and it outlives the
-  process, so `TriggerManager.stop()` has to hand it back.
+- `TriggerRemap` points the chosen key, Caps Lock by default, at a function
+  key (F18 by default) by writing `UserKeyMapping` on an
+  IOHIDEventSystemClient. This must happen first: macOS debounces the real
+  Caps Lock in the HID layer by ~80ms and sends no key repeats for it, which
+  makes tap-versus-hold timing unusable. The property is client-level, not
+  per-service, and it outlives the process, so `TriggerManager.stop()` has to
+  hand it back. A right-hand modifier can be handed over instead, at the price
+  of it not being a modifier while the trigger is on.
 - `HyperTap` runs a `CGEventTap` on its own thread and swallows the trigger
   key outright, so there is nothing to replay and no rollover to resolve. A
   chord becomes Hyper (⌃⌥⇧⌘ merged into the event), a lone hold opens the

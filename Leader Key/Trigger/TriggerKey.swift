@@ -1,7 +1,47 @@
 import Cocoa
 import Defaults
 
-/// The key that Caps Lock is repointed at.
+/// The physical key handed over to the trigger.
+///
+/// Caps Lock is the default for the obvious reason: it is the one key nobody
+/// misses. The right-hand modifiers are here for people who want to keep Caps
+/// Lock, and they cost more than they look, because a remapped modifier stops
+/// being a modifier at all while the trigger is on.
+///
+/// The globe key is deliberately absent. It does not sit on the keyboard usage
+/// page and `UserKeyMapping` cannot move it.
+enum TriggerSource: String, Codable, CaseIterable, Identifiable, Defaults.Serializable {
+  case capsLock
+  case rightCommand
+  case rightOption
+  case rightControl
+  case rightShift
+
+  var id: Self { self }
+
+  /// Keyboard/Keypad page usage, page number in the high 32 bits.
+  var hidUsage: UInt64 {
+    switch self {
+    case .capsLock: return 0x7_0000_0039
+    case .rightControl: return 0x7_0000_00E4
+    case .rightShift: return 0x7_0000_00E5
+    case .rightOption: return 0x7_0000_00E6
+    case .rightCommand: return 0x7_0000_00E7
+    }
+  }
+
+  var description: String {
+    switch self {
+    case .capsLock: return "Caps Lock"
+    case .rightCommand: return "Right Command"
+    case .rightOption: return "Right Option"
+    case .rightControl: return "Right Control"
+    case .rightShift: return "Right Shift"
+    }
+  }
+}
+
+/// The key the trigger is repointed at.
 ///
 /// A HID usage and a Carbon virtual keycode are unrelated numbers, and the
 /// virtual keycodes for these keys are not even in order (F15 is 0x71 while
