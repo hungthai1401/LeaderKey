@@ -49,16 +49,23 @@ extension Defaults.Keys {
     "capsLockTriggerEnabled", default: false, suite: defaultsSuite)
   static let capsLockTriggerKey = Key<TriggerKey>(
     "capsLockTriggerKey", default: .f18, suite: defaultsSuite)
+  // A tap keeps doing what the key is printed to do, because a key that
+  // sometimes toggles Caps Lock and sometimes opens a panel on a press too
+  // quick to feel is worse than either. The panel is on the hold, and it
+  // stays open after the key comes back up, so a sequence can be typed with
+  // both hands free.
   static let capsLockTapBehavior = Key<TapBehavior>(
-    "capsLockTapBehavior", default: .leaderKey, suite: defaultsSuite)
+    "capsLockTapBehavior", default: .capsLock, suite: defaultsSuite)
   static let capsLockHoldBehavior = Key<HoldBehavior>(
-    "capsLockHoldBehavior", default: .hyperOnly, suite: defaultsSuite)
+    "capsLockHoldBehavior", default: .peekLeaderKey, suite: defaultsSuite)
+  // Equal on purpose. The panel opens the moment the tap window shuts, so
+  // there is no gap in the middle where a press means nothing.
   static let capsLockTapTimeoutMS = Key<Int>(
     "capsLockTapTimeoutMS", default: 250, suite: defaultsSuite)
   static let capsLockHoldThresholdMS = Key<Int>(
-    "capsLockHoldThresholdMS", default: 150, suite: defaultsSuite)
+    "capsLockHoldThresholdMS", default: 250, suite: defaultsSuite)
   static let capsLockClosePeekOnRelease = Key<Bool>(
-    "capsLockClosePeekOnRelease", default: true, suite: defaultsSuite)
+    "capsLockClosePeekOnRelease", default: false, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {
