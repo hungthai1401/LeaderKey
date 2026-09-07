@@ -1,0 +1,51 @@
+#!/bin/bash
+# Installs the newest successful App build into ~/Applications.
+#
+# Nothing here needs xattr. Quarantine is applied by whatever downloads a file,
+# and gh does not set it, so a build fetched this way skips Gatekeeper's
+# first-open prompt entirely. Downloading the same artifact through a browser
+# would need `xattr -d -r com.apple.quarantine` afterwards.
+
+set -euo pipefail
+
+REPO="${REPO:-hungthai1401/LeaderKey}"
+BRANCH="${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
+DEST="${DEST:-$HOME/Applications}"
+APP="Leader Key.app"
+
+read -r RUN SHA < <(
+  gh run list -R "$REPO" --workflow App --branch "$BRANCH" \
+    --status success --limit 1 \
+    --json databaseId,headSha --jq '.[0] | "\(.databaseId) \(.headSha)"'
+)
+
+if [[ -z "${RUN:-}" ]]; then
+  echo "No successful App run on $BRANCH yet."
+  exit 1
+fi
+
+echo "Run $RUN, commit ${SHA:0:9}"
+
+WORK="$(mktemp -d)"
+trap 'chmod -R u+w "$WORK" 2>/dev/null; /bin/rm -rf "$WORK"' EXIT
+
+gh run download -R "$REPO" "$RUN" -D "$WORK/artifact"
+ditto -x -k "$WORK/artifact"/*/"Leader Key.zip" "$WORK/extracted"
+
+# Overwriting a running bundle leaves the process with half its files gone.
+if pgrep -qf "$DEST/$APP/Contents/MacOS"; then
+  echo "Quitting the running copy"
+  osascript -e 'quit app id "com.hungthai.LeaderKey"' || true
+fi
+
+mkdir -p "$DEST"
+if [[ -d "$DEST/$APP" ]]; then
+  # Moved aside rather than deleted, so a bad build is one mv from undone.
+  mv "$DEST/$APP" "$WORK/previous.app"
+fi
+ditto "$WORK/extracted/$APP" "$DEST/$APP"
+
+codesign --verify --strict "$DEST/$APP"
+codesign -d -r- "$DEST/$APP" 2>&1 | grep designated
+
+echo "Installed to $DEST/$APP"

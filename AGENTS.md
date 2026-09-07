@@ -32,9 +32,15 @@ prints the two `gh secret set` commands that feed it to the workflow
 (`SIGNING_CERTIFICATE_P12`, `SIGNING_CERTIFICATE_PASSWORD`). Keep the `.p12`
 and its password. Regenerating the certificate resets every grant.
 
-Downloaded builds arrive quarantined. Either `xattr -d -r com.apple.quarantine
-"Leader Key.app"` or open it once through System Settings, Privacy & Security,
-Open Anyway. Right click and Open no longer works for unnotarized apps.
+`bin/install-latest` pulls the newest successful build for the current branch
+into `~/Applications`, quitting the running copy first and keeping the previous
+bundle around until the script exits. Quarantine never enters the picture,
+since it is applied by whatever fetches the file and `gh` does not set it. A
+build downloaded through a browser does need `xattr -d -r
+com.apple.quarantine "Leader Key.app"` before it will open.
+
+The bundle id is `com.hungthai.LeaderKey`, deliberately not upstream's, so this
+build gets its own Accessibility entry and its own preferences.
 
 ## Architecture Overview
 
