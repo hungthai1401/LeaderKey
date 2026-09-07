@@ -22,7 +22,7 @@ if [[ -e "$OUT/cert.p12" ]]; then
   exit 1
 fi
 
-PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+PASSWORD="$(/usr/bin/openssl rand -hex 24)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
