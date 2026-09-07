@@ -1,0 +1,73 @@
+#!/bin/bash
+# Makes the self-signed code signing certificate that CI uses to sign the app.
+#
+# The point of a fixed certificate is Accessibility. macOS keys that grant to
+# the app's designated requirement, and for a self-signed app the requirement
+# includes the hash of the signing certificate. Sign every build with this one
+# certificate and the grant survives rebuilds; leave the app unsigned and the
+# requirement falls back to the binary's cdhash, which changes every build, so
+# the grant dies every time.
+#
+# Run this once, keep cert.p12 somewhere safe, then feed it to GitHub.
+
+set -euo pipefail
+
+NAME="${1:-Leader Key Dev}"
+OUT="${OUT:-$(pwd)}"
+DAYS=3650
+
+if [[ -e "$OUT/cert.p12" ]]; then
+  echo "$OUT/cert.p12 already exists. Move it away first, or the identity in"
+  echo "CI would change and every Accessibility grant would reset."
+  exit 1
+fi
+
+PASSWORD="$(LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 32)"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+# Written out rather than passed with -addext, which LibreSSL only learned
+# recently and macOS ships LibreSSL as /usr/bin/openssl.
+cat > "$WORK/openssl.cnf" <<CNF
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+
+[dn]
+CN = $NAME
+
+[ext]
+basicConstraints = critical,CA:false
+keyUsage = critical,digitalSignature
+extendedKeyUsage = critical,codeSigning
+CNF
+
+/usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days "$DAYS" \
+  -config "$WORK/openssl.cnf" \
+  -keyout "$WORK/key.pem" -out "$WORK/cert.pem" 2>/dev/null
+
+/usr/bin/openssl pkcs12 -export \
+  -inkey "$WORK/key.pem" -in "$WORK/cert.pem" \
+  -name "$NAME" -passout "pass:$PASSWORD" \
+  -out "$OUT/cert.p12"
+
+chmod 600 "$OUT/cert.p12"
+
+echo "Wrote $OUT/cert.p12"
+echo
+echo "Certificate fingerprint (this is the identity Accessibility remembers):"
+/usr/bin/openssl x509 -in "$WORK/cert.pem" -noout -fingerprint -sha1
+echo
+echo "Hand it to GitHub:"
+echo
+echo "  gh secret set SIGNING_CERTIFICATE_P12 < <(base64 -i \"$OUT/cert.p12\")"
+echo "  gh secret set SIGNING_CERTIFICATE_PASSWORD --body '$PASSWORD'"
+echo
+echo "To build locally with the same identity, import and trust it:"
+echo
+echo "  security import \"$OUT/cert.p12\" -k ~/Library/Keychains/login.keychain-db -P '$PASSWORD' -T /usr/bin/codesign"
+echo "  sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain <(openssl pkcs12 -in \"$OUT/cert.p12\" -clcerts -nokeys -passin 'pass:$PASSWORD')"
+echo
+echo "The password is printed once and stored nowhere. Put it in a password"
+echo "manager now, or you will be regenerating the certificate and cursing."

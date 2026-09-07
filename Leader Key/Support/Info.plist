@@ -21,9 +21,17 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Pointed away from upstream's appcast on purpose. That feed serves
+	     builds signed with upstream's EdDSA key, and this fork's binary
+	     trusts that key, so leaving it in place means Sparkle happily
+	     replaces this build with the upstream app and takes the Caps Lock
+	     trigger with it. Automatic checks are off for the same reason:
+	     nothing publishes to the URL below yet. -->
 	<key>SUFeedURL</key>
-	<string>https://mikker.github.io/LeaderKey.app/appcast.xml</string>
+	<string>https://hungthai1401.github.io/LeaderKey/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>4ZfPYKvzE7b/uYW4B8f2v++7Bry/OmvYHCzl3g936KE=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
 </dict>
 </plist>

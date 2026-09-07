@@ -12,6 +12,30 @@ This file provides guidance to coding agents when working with code in this repo
 - Bump version: `bin/bump`
 - Create release: `bin/release`
 
+## Building Without Xcode Installed
+
+The `App` workflow builds a signed `.app` and uploads it as an artifact, which
+is how this fork gets built when there is no local Xcode.
+
+The certificate is the part worth understanding. Accessibility permission is
+stored against the app's designated requirement, so:
+
+- Ad-hoc or unsigned: the requirement is a hash of the binary, so it changes on
+  every build and the permission has to be granted again each time. Since
+  Accessibility is what lets the app create an event tap, an app without it does
+  nothing at all.
+- Signed with a fixed certificate: the requirement is the bundle id plus that
+  certificate, so it holds across builds and the permission is granted once.
+
+`bin/make-signing-cert` produces a self-signed code signing certificate and
+prints the two `gh secret set` commands that feed it to the workflow
+(`SIGNING_CERTIFICATE_P12`, `SIGNING_CERTIFICATE_PASSWORD`). Keep the `.p12`
+and its password. Regenerating the certificate resets every grant.
+
+Downloaded builds arrive quarantined. Either `xattr -d -r com.apple.quarantine
+"Leader Key.app"` or open it once through System Settings, Privacy & Security,
+Open Anyway. Right click and Open no longer works for unnotarized apps.
+
 ## Architecture Overview
 
 Leader Key is a macOS application that provides customizable keyboard shortcuts. The core architecture consists of:

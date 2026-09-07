@@ -1,0 +1,118 @@
+name: App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [caps-lock-trigger]
+
+env:
+  # Must match the CN of the certificate bin/make-signing-cert produced.
+  SIGNING_IDENTITY: Leader Key Dev
+
+jobs:
+  app:
+    runs-on: macos-15
+
+    # Copied into the job env so the steps can branch on whether the
+    # certificate exists. The secrets context is not available to `if`.
+    env:
+      CERT_P12: ${{ secrets.SIGNING_CERTIFICATE_P12 }}
+      CERT_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import the signing certificate
+        if: env.CERT_P12 != ''
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$CERT_PASSWORD" -f pkcs12 -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+
+          # codesign only signs with a certificate it trusts, and trust
+          # settings do not travel inside a .p12, so the public half has to be
+          # installed as a trusted root separately.
+          /usr/bin/openssl pkcs12 -in "$RUNNER_TEMP/cert.p12" -clcerts -nokeys \
+            -passin "pass:$CERT_PASSWORD" -out "$RUNNER_TEMP/cert.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign \
+            -k /Library/Keychains/System.keychain "$RUNNER_TEMP/cert.pem"
+
+          # Put it in the search list, otherwise codesign looks in the default
+          # keychain and reports the identity as missing.
+          security list-keychains -d user -s "$KEYCHAIN" \
+            $(security list-keychains -d user | tr -d '"')
+
+          rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/cert.pem"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
+      - name: Build
+        run: |
+          set -euo pipefail
+
+          if [ -n "$CERT_P12" ]; then
+            IDENTITY="$SIGNING_IDENTITY"
+          else
+            # Ad-hoc. Runs, but the Accessibility grant resets on every build,
+            # because an ad-hoc signature identifies the app by a hash of the
+            # binary and that hash changes whenever the code does.
+            IDENTITY="-"
+            echo "::warning::No signing certificate, falling back to ad-hoc."
+          fi
+
+          xcodebuild \
+            -project "Leader Key.xcodeproj" \
+            -scheme "Leader Key" \
+            -configuration Release \
+            -destination "platform=macOS" \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$IDENTITY" \
+            OTHER_CODE_SIGN_FLAGS=--timestamp=none \
+            ENABLE_HARDENED_RUNTIME=NO \
+            build
+
+      - name: Check the signature
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/dd/Build/Products/Release/Leader Key.app"
+
+          codesign --verify --strict --deep --verbose=2 "$APP"
+
+          # The line that matters. This requirement is what Accessibility
+          # stores, so it has to read the same on every build or the grant
+          # resets and the whole feature goes dead.
+          codesign -d -r- "$APP"
+
+      - name: Package
+        run: |
+          set -euo pipefail
+          APP="$RUNNER_TEMP/dd/Build/Products/Release/Leader Key.app"
+
+          # upload-artifact builds its own archive and loses symlinks and
+          # permission bits on the way, which breaks both the framework layout
+          # and the signature. Ship a ditto archive as a single opaque file and
+          # accept that the download is a zip inside a zip.
+          ditto -c -k --sequesterRsrc --keepParent "$APP" \
+            "$RUNNER_TEMP/Leader Key.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leader-key-${{ github.sha }}
+          path: ${{ runner.temp }}/Leader Key.zip
+          if-no-files-found: error
+
+      - name: Clean up the keychain
+        if: always() && env.CERT_P12 != ''
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" || true
