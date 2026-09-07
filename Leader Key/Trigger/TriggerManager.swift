@@ -118,9 +118,10 @@ final class TriggerManager: ObservableObject {
     tap.update(config: config)
     let g = config.gesture
     triggerLog.notice(
-      "tap=\(g.tapBehavior.rawValue, privacy: .public)/\(g.tapTimeout, privacy: .public)s "
-        + "hold=\(g.holdBehavior.rawValue, privacy: .public)/\(g.holdThreshold, privacy: .public)s "
-        + "closeOnRelease=\(g.closePeekOnRelease, privacy: .public)")
+      "tap=\(g.tapBehavior.rawValue, privacy: .public) under \(g.tapTimeout, privacy: .public)s")
+    triggerLog.notice(
+      "hold=\(g.holdBehavior.rawValue, privacy: .public) at \(g.holdThreshold, privacy: .public)s")
+    triggerLog.notice("closePeekOnRelease=\(g.closePeekOnRelease, privacy: .public)")
 
     let key = Defaults[.capsLockTriggerKey]
     guard CapsLockRemap.shared.apply(target: key) else {
