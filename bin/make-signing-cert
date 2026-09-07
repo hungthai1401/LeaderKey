@@ -61,8 +61,11 @@ echo "Certificate fingerprint (this is the identity Accessibility remembers):"
 echo
 echo "Hand it to GitHub:"
 echo
-echo "  gh secret set SIGNING_CERTIFICATE_P12 < <(base64 -i \"$OUT/cert.p12\")"
-echo "  gh secret set SIGNING_CERTIFICATE_PASSWORD --body '$PASSWORD'"
+# -R is not optional. The clone has upstream as a remote too, and gh resolves
+# the default repo to that one, so without it the secrets land nowhere useful.
+REPO="${REPO:-hungthai1401/LeaderKey}"
+echo "  gh secret set SIGNING_CERTIFICATE_P12 -R $REPO < <(base64 -i \"$OUT/cert.p12\")"
+echo "  gh secret set SIGNING_CERTIFICATE_PASSWORD -R $REPO --body '$PASSWORD'"
 echo
 echo "To build locally with the same identity, import and trust it:"
 echo
