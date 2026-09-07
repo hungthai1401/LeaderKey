@@ -48,6 +48,16 @@ struct TriggerPane: View {
           Text("Press and release with no other key. A slower release does nothing.")
             .font(.callout)
             .foregroundStyle(.secondary)
+
+          if holdBehavior == .peekLeaderKey && tapTimeoutMS > holdThresholdMS {
+            Text(
+              "In peek mode the panel opens at \(holdThresholdMS) ms, so a "
+                + "release later than that is a peek and never reaches this "
+                + "window. Only the first \(holdThresholdMS) ms of it apply."
+            )
+            .font(.callout)
+            .foregroundStyle(.orange)
+          }
         }
         .disabled(!enabled)
       }
