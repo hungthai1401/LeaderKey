@@ -4,6 +4,11 @@ on:
   workflow_dispatch:
   push:
     branches: [caps-lock-trigger]
+    tags: ["v*"]
+
+# Wanted by the release step, and only when a tag is what triggered the run.
+permissions:
+  contents: write
 
 env:
   # Must match the CN of the certificate bin/make-signing-cert produced.
@@ -112,6 +117,23 @@ jobs:
           name: leader-key-${{ github.sha }}
           path: ${{ runner.temp }}/Leader Key.zip
           if-no-files-found: error
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # A space in an asset name reaches the downloader as a dot, so the
+          # file would arrive called Leader.Key.zip. Renamed here.
+          ASSET="$RUNNER_TEMP/LeaderKey-$GITHUB_REF_NAME.zip"
+          cp "$RUNNER_TEMP/Leader Key.zip" "$ASSET"
+
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md \
+            "$ASSET#Leader Key for macOS, Apple Silicon"
 
       - name: Clean up the keychain
         if: always() && env.CERT_P12 != ''
