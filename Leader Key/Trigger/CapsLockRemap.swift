@@ -1,5 +1,6 @@
 import Cocoa
 import IOKit
+import OSLog
 
 /// Repoints the physical Caps Lock key at a function key.
 ///
@@ -97,6 +98,13 @@ final class CapsLockRemap {
     let result = HIDEventSystem.withClient { client in
       HIDEventSystem.setClientProperty(
         Self.mappingProperty, to: pairs as NSArray, on: client)
+    }
+    if result == nil {
+      triggerLog.error("no HID event system client")
+    } else {
+      let accepted = result == true
+      triggerLog.notice(
+        "wrote \(pairs.count, privacy: .public) pair(s), ok=\(accepted, privacy: .public)")
     }
     return result ?? false
   }

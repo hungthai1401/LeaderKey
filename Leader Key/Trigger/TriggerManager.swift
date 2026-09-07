@@ -2,6 +2,13 @@ import ApplicationServices
 import Cocoa
 import Combine
 import Defaults
+import OSLog
+
+/// None of this feature can be exercised on CI, so the log is the only way a
+/// broken install explains itself:
+///
+///     log stream --predicate 'subsystem == "app.leaderkey.trigger"'
+let triggerLog = Logger(subsystem: "app.leaderkey.trigger", category: "trigger")
 
 /// Owns the Caps Lock trigger: the HID remap, the event tap, and the lifetime
 /// rules that keep the two from drifting apart.
@@ -44,6 +51,10 @@ final class TriggerManager: ObservableObject {
   func bootstrap() {
     guard !observing else { return }
     observing = true
+    let on = Defaults[.capsLockTriggerEnabled]
+    let trusted = AXIsProcessTrusted()
+    triggerLog.notice(
+      "bootstrap, enabled=\(on, privacy: .public) trusted=\(trusted, privacy: .public)")
 
     tap.onActivateLeaderKey = { [weak self] in self?.activate?() }
     tap.onDismissLeaderKey = { [weak self] in self?.dismiss?() }
@@ -91,24 +102,34 @@ final class TriggerManager: ObservableObject {
   // MARK: - Start and stop
 
   func start() {
-    guard Defaults[.capsLockTriggerEnabled] else { return }
+    guard Defaults[.capsLockTriggerEnabled] else {
+      triggerLog.notice("start skipped, trigger is off")
+      return
+    }
 
     // The tap goes up first. If Accessibility is missing there is no point
     // disabling the user's Caps Lock to prove it.
     guard tap.start() else {
+      triggerLog.error("tap refused, Accessibility is missing")
       status = .needsAccessibility
       return
     }
     tap.update(config: currentConfig())
 
-    guard CapsLockRemap.shared.apply(target: Defaults[.capsLockTriggerKey]) else {
+    let key = Defaults[.capsLockTriggerKey]
+    guard CapsLockRemap.shared.apply(target: key) else {
+      triggerLog.error("remap to \(key.rawValue, privacy: .public) refused")
       status = .remapFailed
       return
     }
+    let mapping = mappingDescription
+    triggerLog.notice(
+      "running, caps lock is \(key.rawValue, privacy: .public), hid=\(mapping, privacy: .public)")
     status = .running
   }
 
   func stop() {
+    triggerLog.notice("stop")
     tap.stop()
     CapsLockRemap.shared.revert()
     status = .off

@@ -1,4 +1,5 @@
 import Cocoa
+import OSLog
 
 /// Drives a `TriggerGesture` from a CGEventTap.
 ///
@@ -90,6 +91,7 @@ final class HyperTap {
         userInfo: Unmanaged.passUnretained(self).toOpaque()
       )
     else {
+      triggerLog.error("CGEvent.tapCreate returned nil")
       DispatchQueue.main.async { self.onTapRejected?() }
       return false
     }
