@@ -1,8 +1,9 @@
 name: CI
 
 on:
+  # Every branch, so a work-in-progress branch gets type-checked without
+  # opening a pull request first.
   push:
-    branches: [main]
   pull_request:
     branches: [main]
 

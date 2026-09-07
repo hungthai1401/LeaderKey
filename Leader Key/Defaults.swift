@@ -39,6 +39,26 @@ extension Defaults.Keys {
   static let groupShortcuts = Key<Set<String>>(
     "groupShortcuts",
     default: Set(), suite: defaultsSuite)
+
+  // MARK: Caps Lock trigger
+  //
+  // Off by default. Turning it on repoints the user's Caps Lock key and needs
+  // the Accessibility permission, neither of which should happen unasked.
+
+  static let capsLockTriggerEnabled = Key<Bool>(
+    "capsLockTriggerEnabled", default: false, suite: defaultsSuite)
+  static let capsLockTriggerKey = Key<TriggerKey>(
+    "capsLockTriggerKey", default: .f18, suite: defaultsSuite)
+  static let capsLockTapBehavior = Key<TapBehavior>(
+    "capsLockTapBehavior", default: .leaderKey, suite: defaultsSuite)
+  static let capsLockHoldBehavior = Key<HoldBehavior>(
+    "capsLockHoldBehavior", default: .hyperOnly, suite: defaultsSuite)
+  static let capsLockTapTimeoutMS = Key<Int>(
+    "capsLockTapTimeoutMS", default: 250, suite: defaultsSuite)
+  static let capsLockHoldThresholdMS = Key<Int>(
+    "capsLockHoldThresholdMS", default: 150, suite: defaultsSuite)
+  static let capsLockClosePeekOnRelease = Key<Bool>(
+    "capsLockClosePeekOnRelease", default: true, suite: defaultsSuite)
 }
 
 enum AutoOpenCheatsheetSetting: String, Defaults.Serializable {

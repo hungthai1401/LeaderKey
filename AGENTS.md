@@ -30,6 +30,31 @@ Leader Key is a macOS application that provides customizable keyboard shortcuts.
 - Available themes: MysteryBox, Mini, Breadcrumbs, ForTheHorde, Cheater
 - Each theme provides different visual representations of shortcuts
 
+**Caps Lock Trigger (`Leader Key/Trigger/`):**
+
+Optional, off by default, and independent of the `KeyboardShortcuts` path.
+Three layers stacked on each other:
+
+- `CapsLockRemap` points the physical Caps Lock at a function key (F18 by
+  default) by writing `UserKeyMapping` on an IOHIDEventSystemClient. This must
+  happen first: macOS debounces the real Caps Lock in the HID layer by ~80ms
+  and sends no key repeats for it, which makes tap-versus-hold timing
+  unusable. The property is client-level, not per-service, and it outlives the
+  process, so `TriggerManager.stop()` has to hand it back.
+- `HyperTap` runs a `CGEventTap` on its own thread and swallows the trigger
+  key outright, so there is nothing to replay and no rollover to resolve. A
+  chord becomes Hyper (⌃⌥⇧⌘ merged into the event), a lone hold opens the
+  panel, a quick release is a tap.
+- `TriggerManager` owns both, watches the relevant `Defaults` keys, and
+  re-applies after wake.
+
+`HIDEventSystem` holds the `@_silgen_name` bindings for the private IOKit HID
+symbols. `CapsLockState` flips the real Caps Lock through the service-level
+`HIDCapsLockState` property; `IOHIDSetModifierLockState` reads fine but its
+writes are ignored, so do not reach for it.
+
+Needs Accessibility for the tap, and the app cannot be sandboxed.
+
 **Configuration Flow:**
 
 - Config stored at `~/Library/Application Support/Leader Key/config.json`

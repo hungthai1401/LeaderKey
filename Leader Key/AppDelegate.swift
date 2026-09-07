@@ -30,6 +30,12 @@ class AppDelegate: NSObject, NSApplicationDelegate,
         contentView: { GeneralPane().environmentObject(self.config) }
       ),
       Settings.Pane(
+        identifier: .trigger, title: "Caps Lock",
+        toolbarIcon: NSImage(
+          systemSymbolName: "capslock", accessibilityDescription: "Caps Lock")!,
+        contentView: { TriggerPane() }
+      ),
+      Settings.Pane(
         identifier: .advanced, title: "Advanced",
         toolbarIcon: NSImage(named: NSImage.advancedName)!,
         contentView: {
@@ -90,6 +96,13 @@ class AppDelegate: NSObject, NSApplicationDelegate,
     // Activation policy is managed solely by the Settings window
 
     registerGlobalShortcuts()
+
+    TriggerManager.shared.activate = { [weak self] in self?.activate() }
+    TriggerManager.shared.dismiss = { [weak self] in
+      guard let self, self.controller.window.isVisible else { return }
+      self.hide()
+    }
+    TriggerManager.shared.bootstrap()
   }
 
   func activate() {
@@ -132,7 +145,10 @@ class AppDelegate: NSObject, NSApplicationDelegate,
   }
 
   func applicationWillTerminate(_ notification: Notification) {
-    // Config saves automatically on changes
+    // Config saves automatically on changes.
+    // The key mapping is a HID system property that outlives this process,
+    // so skipping this would leave Caps Lock dead until a reboot.
+    TriggerManager.shared.stop()
   }
 
   @IBAction
