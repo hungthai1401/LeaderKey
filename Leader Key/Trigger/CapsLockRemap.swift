@@ -141,9 +141,14 @@ private final class KeyboardArrivalWatcher {
         .scheduleReapply()
     }
 
+    // "IOServiceFirstMatch" is kIOFirstMatchNotification, spelled out because
+    // these IOKit notification types are string #defines that Swift does not
+    // reliably import. First-match rather than publish: it arrives once per
+    // device and only after the drivers are loaded, so the HID service exists
+    // and can actually take the mapping.
     let matching = IOServiceMatching("IOHIDInterface")
     IOServiceAddMatchingNotification(
-      port, kIOMatchedNotify, matching, callback, context, &iterator)
+      port, "IOServiceFirstMatch", matching, callback, context, &iterator)
 
     // The devices already attached sit in the iterator and have to be
     // consumed, or the first real notification never fires.
