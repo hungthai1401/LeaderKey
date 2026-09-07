@@ -170,7 +170,7 @@ final class TriggerGestureTests: XCTestCase {
 
   // Releasing after a peek closes the panel and does not also fire the tap.
   func testReleaseAfterPeekDismissesThePanel() {
-    var g = gesture(hold: .peekLeaderKey, tap: .escape)
+    var g = gesture(tap: .escape, hold: .peekLeaderKey)
     g.triggerDown(at: 0)
     g.holdThresholdReached()
     XCTAssertEqual(g.triggerUp(at: 0.2), [.cancelHoldTimer, .dismissPanel])
