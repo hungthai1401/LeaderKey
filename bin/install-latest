@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs the newest successful App build into ~/Applications.
+# Installs the newest successful App build into /Applications.
 #
 # Nothing here needs xattr. Quarantine is applied by whatever downloads a file,
 # and gh does not set it, so a build fetched this way skips Gatekeeper's
@@ -10,7 +10,8 @@ set -euo pipefail
 
 REPO="${REPO:-hungthai1401/LeaderKey}"
 BRANCH="${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
-DEST="${DEST:-$HOME/Applications}"
+# /Applications is group-writable by admin, so no sudo.
+DEST="${DEST:-/Applications}"
 APP="Leader Key.app"
 
 read -r RUN SHA < <(

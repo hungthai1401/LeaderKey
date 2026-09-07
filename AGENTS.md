@@ -33,7 +33,7 @@ prints the two `gh secret set` commands that feed it to the workflow
 and its password. Regenerating the certificate resets every grant.
 
 `bin/install-latest` pulls the newest successful build for the current branch
-into `~/Applications`, quitting the running copy first and keeping the previous
+into `/Applications`, quitting the running copy first and keeping the previous
 bundle around until the script exits. Quarantine never enters the picture,
 since it is applied by whatever fetches the file and `gh` does not set it. A
 build downloaded through a browser does need `xattr -d -r

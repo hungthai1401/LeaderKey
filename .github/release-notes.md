@@ -4,7 +4,7 @@ together with another key and you get Hyper (⌃⌥⇧⌘).
 
 ### Installing
 
-Unzip, drop it in `~/Applications`, open it, and grant Accessibility when it
+Unzip, drop it in `/Applications`, open it, and grant Accessibility when it
 asks. The app does nothing whatsoever without that permission, since reading
 the keyboard is the entire feature. Then turn the trigger on in Settings, under
 Caps Lock. It ships off, because switching it on repoints a key you already
